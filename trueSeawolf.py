@@ -1,4 +1,3 @@
-# Charles Chen
 import ply.lex as lex
 import ply.yacc as yacc
 import sys
@@ -96,7 +95,6 @@ def t_INT(t):
 
 def t_STRING(t):
 	r'\".*?\"'
-	# t.value = str(t.value).strip("\"")
 	t.value = str(t.value)
 	return t
 
@@ -110,7 +108,6 @@ def t_VARNAME(t):
 	return t
 
 def t_error(t):			# a string containing ignored characters (spaces & tabs)
-	# print("Illegal character '%s'" % t.value[0])
 	t.lexer.skip(1)
 
 lexer = lex.lex()
@@ -155,17 +152,14 @@ global_stack.push(static_scope)
 
 class Node:
     def __init__(self):
-        # print("Node") # for debugging
         self.x = 0
     def evaluate(self):
         return 0
     def execute(self): 
-        # print("Execute") # for debugging
         self.x = 0
 
 class MainNode(Node):
 	def __init__(self, body):
-		# print("MainNode") # for debugging
 		self.body = body
 	def evaluate(self):
 		for i in self.body:
@@ -175,15 +169,12 @@ class MainNode(Node):
 
 class MethodNode(Node):
 	def __init__(self, mname, params, mblock):
-		# print("MethodNode")
 		self.mname = mname
 		self.params = params
 		self.mblock = mblock
 	def evaluate(self):
 		self.execute()
 	def execute(self):
-		# print("Execute MethodNode") # for debugging
-		# print(self.mname) # for debugging
 		methods[self.mname] = (self.params, self.mblock)
 
 class MethodCallNode(Node):
@@ -193,17 +184,14 @@ class MethodCallNode(Node):
 	def evaluate(self):
 		return self.execute()
 	def execute(self):
-		# print("Execute MethodCallNode") # for debugging
 		thisScope = dict()
 		meth = self.mname
-		# print(meth)
 		if meth in methods:
 			dalist = methods[meth][0]
 			if len(dalist) == len(self.params):
 				for i in range(len(dalist)):
 					thisScope[dalist[i].vname] = self.params[i].evaluate()
 				global_stack.push(thisScope)
-				# print(global_stack.items) # for debugging
 				methods[meth][1].popScope = True
 				x = methods[meth][1].execute()
 				return x
@@ -214,14 +202,9 @@ class MethodCallNode(Node):
 
 class VarNameNode(Node):
 	def __init__(self, vname):
-		# print("VarNameNode") # for debugging
 		self.vname = vname
-		# print(self.vname) # for debugging
 	def evaluate(self):
-		# print("Evaluate VarNameNode") # for debugging
 		scope = global_stack.peek()
-		# print(self.vname) # for debugging
-		# print(scope) # for debugging
 		if self.vname in scope:
 			return global_stack.peek()[self.vname]
 		else:
@@ -230,52 +213,39 @@ class VarNameNode(Node):
 			else:
 				raise ValueError("SEMANTIC ERROR")
 	def execute(self):
-		# print("Execute VarNameNode") # for debugging
 		return self.evaluate()
 
 class IntNode(Node):
 	def __init__(self, v):
 		self.value = int(v)
-		# print("IntNode") # for debugging
 	def evaluate(self):
-		# print("Evaluate IntNode") # for debugging
 		return self.value
 	def execute(self):
-		# print("Execute IntNode") # for debugging
 		return self.value   
 
 class RealNode(Node):
 	def __init__(self, v):
 		self.value = float(v)
-		# print("IntNode") # for debugging
 	def evaluate(self):
-		# print("Evaluate RealNode") # for debugging
 		return self.value
 	def execute(self):
-		# print("Execute RealNode") # for debugging
 		return self.value
  
 class StringNode(Node):
     def __init__(self, v):
         self.value = str(v)
         self.value = self.value[1:-1] # to eliminate the left and right double quotes
-        # print("StringNode") # for debugging
     def evaluate(self):
-        # print("Evaluate StringNode") # for debugging
         return self.value
     def execute(self):
-        # print("Execute StringNode") # for debugging
         return self.value
  
 class PrintNode(Node):
     def __init__(self, v):
         self.value = v
-        # print("PrintNode") # for debugging
     def evaluate(self):
-        # print("Evaluate PrintNode") # for debugging
         self.execute()
     def execute(self):
-        # print("Execute PrintNode") # for debugging
         print(self.value.evaluate())
  
 class IfNode(Node):
@@ -283,12 +253,9 @@ class IfNode(Node):
         self.condition = c
         self.thenBlock = t
         self.elseBlock= e
-        # print("IfNode") # for debugging
     def evaluate(self):
-        # print("Evaluate IfNode") # for debugging
         return 0
     def execute(self):
-        # print("Execute IfNode") # for debugging
         try:
         	if(self.condition.evaluate()):
         		self.thenBlock.popScope = False
@@ -315,9 +282,7 @@ class IndexNode(Node):
 class ListNode(Node):
 	def __init__(self, l):
 		self.list = l
-		# print("ListNode") # for debugging
 	def evaluate(self):
-		# print("Evaluate ListNode") # for debugging
 		ctr = 0
 		for i in self.list:
 			self.list[ctr] = i.evaluate()
@@ -331,19 +296,14 @@ class BlockNode(Node):
         self.statementNodes = sl
         self.popScope = False
         self.newScope = False
-        # print("BlockNode") # for debugging
     def evaluate(self):
-        # print("Evaluate BlockNode") # for debugging
         return self.execute()
     def execute(self):
     	x = None
-    	# print(global_stack.items) # for debugging
-        # print("Execute BlockNode") # for debugging
     	if self.newScope == True:
     		global_stack.push(dict())
     	try:
         	for statement in self.statementNodes:
-        		# statement.execute() 
         		if isinstance(statement, ReturnNode):
         			x = statement.execute()
         			if self.popScope == True:
@@ -373,12 +333,9 @@ class AssignmentNode(Node):
 	def __init__(self, var, val):
 		self.var = var
 		self.val = val
-		# print("AssignmentNode") # for debugging
 	def evaluate(self):
-		# print("Evaluate AssignmentNode") # for debugging
 		self.execute()
 	def execute(self):
-		# print("Execute AssignmentNode") # for debugging
 		if isinstance(self.var, IndexNode):
 			scope = global_stack.peek()
 			if self.var in scope:
@@ -387,7 +344,6 @@ class AssignmentNode(Node):
 				static_scope[self.var.indexing(self.val)] = self.val.evaluate()
 		else:
 			global_stack.peek()[self.var.vname] = self.val.evaluate()
-		# print(global_variables) # for debugging
 
 class ExpressionNode(Node):
 	def __init__(self, op, v1, v2):
@@ -395,12 +351,10 @@ class ExpressionNode(Node):
 		self.v1 = v1
 		self.v2 = v2
 	def evaluate(self):
-		# print("Evaluate ExpressionNode") # for debugging
 		return self.execute()
 	def execute(self):
 		l = self.v1.evaluate()
 		r = self.v2.evaluate()
-		# print("Execute ExpressionNode") # for debugging
 		if self.op == '+':
 			return l+r
 		elif self.op == '-':
